@@ -15,6 +15,7 @@ pub fn html(input: TokenStream) -> TokenStream {
 }
 
 fn html_macro(input: TokenStream) -> Result<TokenStream2> {
+    let size_hint = input.to_string().len();
     let config = ParserConfig::new()
         .recover_block(true)
         .always_self_closed_elements(HashSet::from([
@@ -39,7 +40,17 @@ fn html_macro(input: TokenStream) -> Result<TokenStream2> {
 
     Ok(match tokens.is_empty() {
         true => quote! { Component { html: #format_string.into() } },
-        false => quote! { Component { html: format!(#format_string, #(#tokens,)*) } },
+        false => quote! {
+            {
+                use std::fmt::Write;
+                let mut buf = String::with_capacity(#size_hint);
+                let html = match write!(&mut buf, #format_string, #(#tokens,)*) {
+                    Ok(_) => buf,
+                    Err(_) => buf
+                };
+                Component { html: html }
+            }
+        },
     })
 }
 
@@ -47,7 +58,7 @@ fn render(output: &mut Output, node: &Node) {
     match node {
         Node::Comment(c) => {
             output.format_string.push_str("<!--");
-            output.format_string.push_str(&escape(c.value.value()));
+            output.format_string.push_str(&c.value.value());
             output.format_string.push_str("-->");
         }
         Node::Doctype(d) => {
@@ -130,7 +141,7 @@ fn render(output: &mut Output, node: &Node) {
                                 match attr.value_literal_string() {
                                     Some(s) => {
                                         output.format_string.push_str("=\"");
-                                        output.format_string.push_str(&escape(&s));
+                                        output.format_string.push_str(&s);
                                         output.format_string.push_str("\"");
                                     }
                                     None => match attr.value() {
@@ -184,34 +195,8 @@ fn render(output: &mut Output, node: &Node) {
             let tokens = n.to_token_stream();
             output.tokens.push(quote! { #tokens.render_to_string() });
         }
-        Node::Text(n) => output.format_string.push_str(&escape(&n.value_string())),
-        Node::RawText(_n) => todo!(),
-    }
-}
-
-fn escape<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
-    let input = input.into();
-    fn needs_escaping(c: char) -> bool {
-        c == '<' || c == '>' || c == '&' || c == '"' || c == '\''
-    }
-
-    if let Some(first) = input.find(needs_escaping) {
-        let mut output = String::from(&input[0..first]);
-        output.reserve(input.len() - first);
-        let rest = input[first..].chars();
-        for c in rest {
-            match c {
-                '<' => output.push_str("&lt;"),
-                '>' => output.push_str("&gt;"),
-                '&' => output.push_str("&amp;"),
-                '"' => output.push_str("&quot;"),
-                '\'' => output.push_str("&#39;"),
-                _ => output.push(c),
-            }
-        }
-        Cow::Owned(output)
-    } else {
-        input
+        Node::Text(n) => output.format_string.push_str(&n.value_string()),
+        Node::RawText(n) => output.format_string.push_str(&n.to_token_stream_string()),
     }
 }
 

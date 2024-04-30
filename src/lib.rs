@@ -124,7 +124,7 @@ macro_rules! raw {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Component {
-    html: String,
+    pub html: String,
 }
 
 pub trait Render {
