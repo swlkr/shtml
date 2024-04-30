@@ -1,10 +1,10 @@
-use std::{borrow::Cow, collections::HashSet, fmt::Debug};
+use std::{collections::HashSet, fmt::Debug};
 
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use rstml::{self, node::Node, Parser, ParserConfig};
-use syn::Result;
+use syn::{Ident, LitStr, Result};
 
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
@@ -25,48 +25,40 @@ fn html_macro(input: TokenStream) -> Result<TokenStream2> {
     let parser = Parser::new(config);
 
     let nodes = parser.parse_simple(input)?;
-    // dbg!(&nodes);
+    let buf = Ident::new("__hypebeast_buf", Span::call_site());
     let mut output = Output {
-        format_string: String::new(),
+        buf: buf.clone(),
+        static_string: String::new(),
         tokens: vec![],
     };
     nodes
         .into_iter()
         .for_each(|node| render(&mut output, &node));
-    let Output {
-        format_string,
-        tokens,
-    } = output;
 
-    Ok(match tokens.is_empty() {
-        true => quote! { Component { html: #format_string.into() } },
-        false => quote! {
-            {
-                use std::fmt::Write;
-                let mut buf = String::with_capacity(#size_hint);
-                let html = match write!(&mut buf, #format_string, #(#tokens,)*) {
-                    Ok(_) => buf,
-                    Err(_) => buf
-                };
-                Component { html: html }
-            }
-        },
+    let tokens = output.to_token_stream();
+
+    Ok(quote! {
+        {
+            let mut #buf = String::with_capacity(#size_hint);
+            #tokens
+            Component { html: #buf }
+        }
     })
 }
 
 fn render(output: &mut Output, node: &Node) {
     match node {
         Node::Comment(c) => {
-            output.format_string.push_str("<!--");
-            output.format_string.push_str(&c.value.value());
-            output.format_string.push_str("-->");
+            output.push_str("<!--");
+            output.push_str(&c.value.value());
+            output.push_str("-->");
         }
         Node::Doctype(d) => {
-            output.format_string.push_str("<!DOCTYPE ");
+            output.push_str("<!DOCTYPE ");
             output
-                .format_string
+                .static_string
                 .push_str(&d.value.to_token_stream_string());
-            output.format_string.push_str(">");
+            output.push_str(">");
         }
         Node::Fragment(_) => todo!(),
         Node::Element(n) => {
@@ -86,8 +78,6 @@ fn render(output: &mut Output, node: &Node) {
             };
             match component_name {
                 Some(fn_name) => {
-                    output.format_string.push_str("{}");
-
                     let mut inputs = n
                         .open_tag
                         .attributes
@@ -101,53 +91,65 @@ fn render(output: &mut Output, node: &Node) {
                         })
                         .collect::<Vec<_>>();
 
-                    let mut inner_output = Output {
-                        format_string: String::new(),
-                        tokens: vec![],
-                    };
+                    let mut inner_output = Output::new(output.buf.clone());
 
                     for node in &n.children {
                         render(&mut inner_output, &node);
                     }
 
-                    let Output {
-                        format_string,
-                        tokens,
-                    } = inner_output;
+                    match (
+                        inner_output.static_string.is_empty(),
+                        inner_output.tokens.is_empty(),
+                    ) {
+                        (false, _) => {
+                            let buf = inner_output.buf.clone();
+                            let inner_tokens = inner_output.to_token_stream();
+                            let inner_tokens = quote! {
+                                {
+                                    let mut #buf = String::new();
+                                    #inner_tokens
+                                    Component { html: #buf }
+                                }
+                            };
 
-                    match (format_string.is_empty(), tokens.is_empty()) {
-                        (false, true) => {
-                            inputs.push(quote! { Component { html: #format_string.into() } });
-                        }
-                        (false, false) => {
-                            inputs.push(quote! { Component { html: format!(#format_string, #(#tokens,)*) } });
+                            inputs.push(inner_tokens);
                         }
                         _ => {}
                     }
 
                     let tokens = quote! { #fn_name(#(#inputs,)*) };
 
-                    output.tokens.push(tokens);
+                    let buf = &output.buf;
+                    let tokens = quote! {
+                        #tokens.render_to_string(&mut #buf);
+                    };
+                    output.push_tokens(tokens);
                 }
                 None => {
-                    output.format_string.push_str("<");
-                    output.format_string.push_str(&n.open_tag.name.to_string());
+                    output.push_str("<");
+                    output.push_str(&n.open_tag.name.to_string());
                     for attr in &n.open_tag.attributes {
                         match attr {
                             rstml::node::NodeAttribute::Block(_) => todo!(),
                             rstml::node::NodeAttribute::Attribute(attr) => {
-                                output.format_string.push(' ');
-                                output.format_string.push_str(&attr.key.to_string());
+                                output.static_string.push(' ');
+                                output.push_str(&attr.key.to_string());
                                 match attr.value_literal_string() {
                                     Some(s) => {
-                                        output.format_string.push_str("=\"");
-                                        output.format_string.push_str(&s);
-                                        output.format_string.push_str("\"");
+                                        output.push_str("=\"");
+                                        output.push_str(&s);
+                                        output.push_str("\"");
                                     }
                                     None => match attr.value() {
                                         Some(expr) => {
-                                            output.format_string.push_str("=\"{}\"");
-                                            output.tokens.push(expr.to_token_stream());
+                                            output.push_str("=\"");
+                                            let buf = &output.buf;
+                                            let stream = expr.to_token_stream();
+                                            let tokens = quote! {
+                                                #stream.render_to_string(&mut #buf);
+                                            };
+                                            output.push_tokens(tokens);
+                                            output.push_str("\"");
                                         }
                                         None => {
                                             // TODO: bool attr?
@@ -160,29 +162,29 @@ fn render(output: &mut Output, node: &Node) {
                     match &n.children.is_empty() {
                         true => match &n.close_tag {
                             Some(tag) => {
-                                output.format_string.push_str(">");
-                                output.format_string.push_str("</");
-                                output.format_string.push_str(&tag.name.to_string());
-                                output.format_string.push_str(">");
+                                output.push_str(">");
+                                output.push_str("</");
+                                output.push_str(&tag.name.to_string());
+                                output.push_str(">");
                             }
                             None => {
-                                output.format_string.push_str("/>");
+                                output.push_str("/>");
                             }
                         },
                         false => {
-                            output.format_string.push_str(">");
+                            output.push_str(">");
                             for child in &n.children {
                                 render(output, &child);
                             }
 
                             match &n.close_tag {
                                 Some(tag) => {
-                                    output.format_string.push_str("</");
-                                    output.format_string.push_str(&tag.name.to_string());
-                                    output.format_string.push_str(">");
+                                    output.push_str("</");
+                                    output.push_str(&tag.name.to_string());
+                                    output.push_str(">");
                                 }
                                 None => {
-                                    output.format_string.push_str("/>");
+                                    output.push_str("/>");
                                 }
                             }
                         }
@@ -191,17 +193,58 @@ fn render(output: &mut Output, node: &Node) {
             }
         }
         Node::Block(n) => {
-            output.format_string.push_str("{}");
+            let buf = &output.buf;
             let tokens = n.to_token_stream();
-            output.tokens.push(quote! { #tokens.render_to_string() });
+            let tokens = quote! {
+                #tokens.render_to_string(&mut #buf);
+            };
+            output.push_tokens(tokens);
         }
-        Node::Text(n) => output.format_string.push_str(&n.value_string()),
-        Node::RawText(n) => output.format_string.push_str(&n.to_token_stream_string()),
+        Node::Text(n) => output.push_str(&n.value_string()),
+        Node::RawText(n) => output.push_str(&n.to_token_stream_string()),
     }
 }
 
 #[derive(Debug)]
 struct Output {
-    format_string: String,
+    buf: Ident,
+    static_string: String,
     tokens: Vec<TokenStream2>,
+}
+
+impl Output {
+    fn new(buf: Ident) -> Self {
+        Self {
+            buf,
+            tokens: vec![],
+            static_string: String::new(),
+        }
+    }
+
+    fn push_str(&mut self, string: &str) {
+        self.static_string.push_str(string);
+    }
+
+    fn push_tokens(&mut self, tokens: TokenStream2) {
+        self.push_expr();
+        self.tokens.push(tokens);
+    }
+
+    fn push_expr(&mut self) {
+        if self.static_string.is_empty() {
+            return;
+        }
+        let expr = {
+            let output_ident = self.buf.clone();
+            let string = LitStr::new(&self.static_string, Span::call_site());
+            quote!(#output_ident.push_str(#string);)
+        };
+        self.static_string.clear();
+        self.tokens.push(expr);
+    }
+
+    fn to_token_stream(mut self) -> TokenStream2 {
+        self.push_expr();
+        self.tokens.into_iter().collect()
+    }
 }

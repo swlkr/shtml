@@ -7,6 +7,8 @@ name = "hypebeast"
 version = "0.1.0"
 dependencies = [
  "hypebeast_macros",
+ "itoa",
+ "ryu",
 ]
 
 [[package]]
@@ -18,6 +20,12 @@ dependencies = [
  "rstml",
  "syn",
 ]
+
+[[package]]
+name = "itoa"
+version = "1.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
 
 [[package]]
 name = "proc-macro-error"
@@ -86,6 +94,12 @@ dependencies = [
  "syn_derive",
  "thiserror",
 ]
+
+[[package]]
+name = "ryu"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e86697c916019a8588c99b5fac3cead74ec0b4b819707a682fd4d23fa0ce1ba1"
 
 [[package]]
 name = "syn"

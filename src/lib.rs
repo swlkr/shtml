@@ -46,7 +46,7 @@ mod tests {
         }
 
         let x = "<script>hypebeast</script>";
-        let result = html! { <Hello name=x/> }.render_to_string();
+        let result = html! { <Hello name=x/> }.to_string();
 
         assert_eq!(
             result,
@@ -70,7 +70,7 @@ mod tests {
                 <span>"mr."</span>
             </Hello>
         }
-        .render_to_string();
+        .to_string();
 
         assert_eq!(result, r#"<span>mr.</span><div>hypebeast</div>"#);
     }
@@ -109,7 +109,7 @@ mod tests {
         };
 
         assert_eq!(
-            component.render_to_string(),
+            component.to_string(),
             "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
         );
     }
@@ -128,47 +128,60 @@ pub struct Component {
 }
 
 pub trait Render {
-    fn render_to_string(&self) -> String;
+    fn render_to_string(&self, buffer: &mut String);
 }
 
-macro_rules! impl_render_to_string {
+macro_rules! impl_render_int {
     ($t:ty) => {
         impl Render for $t {
-            fn render_to_string(&self) -> String {
-                self.to_string()
+            fn render_to_string(&self, buffer: &mut String) {
+                let mut b = itoa::Buffer::new();
+                buffer.push_str(b.format(*self));
             }
         }
     };
 }
 
-impl_render_to_string!(u8);
-impl_render_to_string!(i8);
-impl_render_to_string!(u16);
-impl_render_to_string!(i16);
-impl_render_to_string!(f64);
-impl_render_to_string!(f32);
-impl_render_to_string!(i64);
-impl_render_to_string!(u64);
-impl_render_to_string!(i32);
-impl_render_to_string!(u32);
-impl_render_to_string!(usize);
-impl_render_to_string!(isize);
+macro_rules! impl_render_float {
+    ($t:ty) => {
+        impl Render for $t {
+            fn render_to_string(&self, buffer: &mut String) {
+                let mut b = ryu::Buffer::new();
+                buffer.push_str(b.format(*self));
+            }
+        }
+    };
+}
+
+impl_render_int!(u8);
+impl_render_int!(i8);
+impl_render_int!(u16);
+impl_render_int!(i16);
+impl_render_int!(i64);
+impl_render_int!(u64);
+impl_render_int!(i32);
+impl_render_int!(u32);
+impl_render_int!(usize);
+impl_render_int!(isize);
+
+impl_render_float!(f64);
+impl_render_float!(f32);
 
 impl Render for Component {
-    fn render_to_string(&self) -> String {
-        self.html.clone()
+    fn render_to_string(&self, buffer: &mut String) {
+        buffer.push_str(&self.html);
     }
 }
 
 impl Render for String {
-    fn render_to_string(&self) -> String {
-        escape(self).into()
+    fn render_to_string(&self, buffer: &mut String) {
+        buffer.push_str(&escape(self))
     }
 }
 
 impl Render for &str {
-    fn render_to_string(&self) -> String {
-        escape(*self).into()
+    fn render_to_string(&self, buffer: &mut String) {
+        buffer.push_str(&escape(*self))
     }
 }
 
@@ -176,11 +189,8 @@ impl<T> Render for Vec<T>
 where
     T: Render,
 {
-    fn render_to_string(&self) -> String {
-        self.iter()
-            .map(|s| s.render_to_string())
-            .collect::<Vec<_>>()
-            .join("")
+    fn render_to_string(&self, buffer: &mut String) {
+        self.iter().for_each(|s| s.render_to_string(buffer));
     }
 }
 

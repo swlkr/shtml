@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 hypebeast_macros = { path = "hypebeast_macros" }
+itoa = "1.0"
+ryu = "1.0"
 
