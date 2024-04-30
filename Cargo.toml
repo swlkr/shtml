@@ -1,0 +1,8 @@
+[package]
+name = "hypebeast"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hypebeast_macros = { path = "hypebeast_macros" }
+
