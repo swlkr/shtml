@@ -3,13 +3,8 @@ use std::{borrow::Cow, collections::HashSet, fmt::Debug};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use rstml::{self, node::Node, parse2, Parser, ParserConfig};
-use syn::{
-    parse::{Parse, ParseStream, Peek},
-    parse_macro_input,
-    punctuated::Punctuated,
-    Expr, ExprCall, ExprInfer, PatPath, Result, Token,
-};
+use rstml::{self, node::Node, Parser, ParserConfig};
+use syn::Result;
 
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
@@ -190,7 +185,7 @@ fn render(output: &mut Output, node: &Node) {
             output.tokens.push(quote! { #tokens.render_to_string() });
         }
         Node::Text(n) => output.format_string.push_str(&escape(&n.value_string())),
-        Node::RawText(n) => todo!(),
+        Node::RawText(_n) => todo!(),
     }
 }
 

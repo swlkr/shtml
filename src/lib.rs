@@ -74,6 +74,45 @@ mod tests {
 
         assert_eq!(result, r#"<span>mr.</span><div>hypebeast</div>"#);
     }
+
+    #[test]
+    fn it_works_for_tables() {
+        const SIZE: usize = 2;
+        let mut rows = Vec::with_capacity(SIZE);
+        for _ in 0..SIZE {
+            let mut inner = Vec::with_capacity(SIZE);
+            for i in 0..SIZE {
+                inner.push(i);
+            }
+            rows.push(inner);
+        }
+
+        let component = html! {
+            <table>
+                {rows
+                    .iter()
+                    .map(|cols| {
+                        html! {
+                            <tr>
+
+                                {cols
+                                    .iter()
+                                    .map(|col| html! { <td>{col}</td> })
+                                    .collect::<Vec<_>>()}
+
+                            </tr>
+                        }
+                    })
+                    .collect::<Vec<_>>()}
+
+            </table>
+        };
+
+        assert_eq!(
+            component.render_to_string(),
+            "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
+        );
+    }
 }
 
 #[macro_export]
@@ -133,23 +172,23 @@ impl Render for &str {
     }
 }
 
+impl<T> Render for Vec<T>
+where
+    T: Render,
+{
+    fn render_to_string(&self) -> String {
+        self.iter()
+            .map(|s| s.render_to_string())
+            .collect::<Vec<_>>()
+            .join("")
+    }
+}
+
 impl std::fmt::Display for Component {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{}", self.html))
     }
 }
-
-// #[derive(Debug)]
-// pub struct Components(Vec<Component>);
-
-// impl std::fmt::Display for Components {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_fmt(format_args!(
-//             "{}",
-//             self.0.iter().map(|c| c.html.clone()).collect::<String>()
-//         ))
-//     }
-// }
 
 pub fn escape<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
     let input = input.into();
