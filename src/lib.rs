@@ -53,6 +53,18 @@ mod tests {
     }
 
     #[test]
+    fn it_works_with_attrs() {
+        fn Hypermedia(target: &str) -> Component {
+            html! { <div x-target=target></div> }
+        }
+
+        let x = "body";
+        let result = html! { <Hypermedia target=x/> }.to_string();
+
+        assert_eq!(result, r#"<div x-target="body"></div>"#);
+    }
+
+    #[test]
     fn it_works_with_escaped_components() {
         fn Hello(elements: Elements) -> Component {
             html! { {elements} }
@@ -69,6 +81,24 @@ mod tests {
         assert_eq!(
             result,
             r#"<div>&lt;script&gt;alert(&quot;owned&quot;)&lt;/script&gt;</div>"#
+        );
+    }
+
+    #[test]
+    fn it_works_with_components_with_attrs_and_children() {
+        fn Heading(class: &str, els: Elements) -> Component {
+            html! { <h1 class=class>{els}</h1> }
+        }
+
+        let result = html! {
+            <Heading class="text-7xl text-red-500">
+                <p>How now brown cow</p>
+            </Heading>
+        };
+
+        assert_eq!(
+            result.to_string(),
+            r#"<h1 class="text-7xl text-red-500"><p>How now brown cow</p></h1>"#
         );
     }
 

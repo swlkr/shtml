@@ -35,6 +35,15 @@ Get this back in the result var
 </html>
 ```
 
+Attrs work like you would expect
+
+```rust
+let class = "flex items-center h-full";
+let result = html! { <div class=class></div> }.to_string();
+
+// <div class="flex items-center h-full"></div>
+```
+
 Pass in rust exprs in curlies just make sure they impl `Render`
 
 ```rust
@@ -68,9 +77,24 @@ let component = html! {
       <div>2</div>
       <div>3</div>
     </HStack>
-};
+}.to_string();
 
 // <div class="flex gap-4"><div>1</div><div>2</div><div>3</div></div>
+```
+
+Attrs with components work as well
+
+```rust
+#![allow(non_snake_case)]
+
+fn Hypermedia(target: &str) -> Component {
+    html! { <div x-target=target></div> }
+}
+
+let x = "body";
+let result = html! { <Hypermedia target=x/> }.to_string();
+
+// <div x-target="body"></div>
 ```
 
 Nested components
@@ -93,9 +117,25 @@ let component = html! {
           <div>2</div>
       </VStack>
     </HStack>
-};
+}.to_string();
 
 // <div class="flex gap-4"><div class="flex flex-col gap-4"><div>1</div><div>2</div></div></div>
+```
+
+Attrs + nested components
+
+```rust
+fn Heading(class: &str, els: Elements) -> Component {
+    html! { <h1 class=class>{els}</h1> }
+}
+
+let result = html! {
+    <Heading class="text-7xl text-red-500">
+        <p>How now brown cow</p>
+    </Heading>
+}.to_string();
+
+// <h1 class="text-7xl text-red-500"><p>How now brown cow</p></h1>
 ```
 
 Fragments just pass through their children
@@ -120,7 +160,7 @@ let component = html! {
         </VStack>
       </>
     </HStack>
-};
+}.to_string();
 
 // <div class="flex gap-4"><div class="flex flex-col gap-4"><div>1</div><div>2</div></div></div>
 ```
