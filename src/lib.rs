@@ -181,8 +181,8 @@ mod tests {
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn it_works_with_multiple_children_components() {
-        #[allow(non_snake_case)]
         fn Html(component: Component) -> Component {
             html! {
                 <!DOCTYPE html>
@@ -190,7 +190,6 @@ mod tests {
             }
         }
 
-        #[allow(non_snake_case)]
         fn Head(component: Component) -> Component {
             html! { <head>{component}</head> }
         }
