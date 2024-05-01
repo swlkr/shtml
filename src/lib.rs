@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 pub use hypebeast_macros::html;
 use std::borrow::Cow;
 
@@ -40,7 +42,6 @@ mod tests {
 
     #[test]
     fn it_works_with_components() {
-        #[allow(non_snake_case)]
         fn Hello(name: &str) -> Component {
             html! { <div>{name}</div> }
         }
@@ -56,7 +57,6 @@ mod tests {
 
     #[test]
     fn it_works_with_escaped_components() {
-        #[allow(non_snake_case)]
         fn Hello(elements: Elements) -> Component {
             html! { {elements} }
         }
@@ -77,7 +77,6 @@ mod tests {
 
     #[test]
     fn it_works_with_components_with_children() {
-        #[allow(non_snake_case)]
         fn Hello(name: &str, elements: Elements) -> Component {
             html! {
                 {elements}
@@ -144,17 +143,14 @@ mod tests {
             rows.push(inner);
         }
 
-        #[allow(non_snake_case)]
         fn Table(rows: Elements) -> Component {
             html! { <table>{rows}</table> }
         }
 
-        #[allow(non_snake_case)]
         fn Row(cols: Elements) -> Component {
             html! { <tr>{cols}</tr> }
         }
 
-        #[allow(non_snake_case)]
         fn Col(i: Elements) -> Component {
             html! { <td>{i}</td> }
         }
@@ -181,7 +177,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(non_snake_case)]
     fn it_works_with_multiple_children_components() {
         fn Html(component: Elements) -> Component {
             html! {
@@ -194,7 +189,6 @@ mod tests {
             html! { <head>{component}</head> }
         }
 
-        #[allow(non_snake_case)]
         fn Body(component: Elements) -> Component {
             html! { <body>{component}</body> }
         }
@@ -215,7 +209,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(non_snake_case)]
     fn it_works_with_fragments() {
         fn HStack(elements: Elements) -> Component {
             html! { <div class="flex gap-4">{elements}</div> }
@@ -238,7 +231,26 @@ mod tests {
     }
 
     #[test]
-    #[allow(non_snake_case)]
+    fn it_works_with_simple_loops() {
+        fn List(elements: Elements) -> Component {
+            html! { <ul>{elements}</ul> }
+        }
+
+        fn Item(elements: Elements) -> Component {
+            html! { <li>{elements}</li> }
+        }
+
+        let items = vec![1, 2, 3];
+
+        let component = html! { <List>{items.iter().map(|i| html! { <Item>{i}</Item> }).collect::<Vec<_>>()}</List> };
+
+        assert_eq!(
+            component.to_string(),
+            r#"<ul><li>1</li><li>2</li><li>3</li></ul>"#
+        );
+    }
+
+    #[test]
     fn it_works_with_fragments_and_components() {
         fn HStack(elements: Elements) -> Component {
             html! { <div class="flex gap-4">{elements}</div> }
@@ -250,12 +262,10 @@ mod tests {
 
         let component = html! {
             <HStack>
-                <>
-                    <VStack>
-                        <div>1</div>
-                        <div>2</div>
-                    </VStack>
-                </>
+                <VStack>
+                    <div>1</div>
+                    <div>2</div>
+                </VStack>
             </HStack>
         };
 
