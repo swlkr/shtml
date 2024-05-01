@@ -13,7 +13,7 @@ cargo add https://github.com/swlkr/shtml
 Just write or copy/paste plain old html
 
 ```rust
-use shtml::{Elements, Component};
+use shtml::{html, Elements, Component, Render};
 
 let result = html! {
     <!DOCTYPE html>
