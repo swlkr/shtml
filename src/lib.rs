@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-pub use hypebeast_macros::html;
+pub use shtml_macros::html;
 use std::borrow::Cow;
 
 #[cfg(test)]
@@ -13,14 +13,14 @@ mod tests {
             <!DOCTYPE html>
             <html lang="en">
                 <head></head>
-                <body>hypebeast</body>
+                <body>shtml</body>
             </html>
         }
         .to_string();
 
         assert_eq!(
             result,
-            r#"<!DOCTYPE html><html lang="en"><head></head><body>hypebeast</body></html>"#
+            r#"<!DOCTYPE html><html lang="en"><head></head><body>shtml</body></html>"#
         );
     }
 
@@ -46,13 +46,10 @@ mod tests {
             html! { <div>{name}</div> }
         }
 
-        let x = "<script>hypebeast</script>";
+        let x = "<script>shtml</script>";
         let result = html! { <Hello name=x/> }.to_string();
 
-        assert_eq!(
-            result,
-            r#"<div>&lt;script&gt;hypebeast&lt;/script&gt;</div>"#
-        );
+        assert_eq!(result, r#"<div>&lt;script&gt;shtml&lt;/script&gt;</div>"#);
     }
 
     #[test]
@@ -84,7 +81,7 @@ mod tests {
             }
         }
 
-        let x = "hypebeast";
+        let x = "shtml";
         let result = html! {
             <Hello name=x>
                 <span>"mr."</span>
@@ -92,7 +89,7 @@ mod tests {
         }
         .to_string();
 
-        assert_eq!(result, r#"<span>mr.</span><div>hypebeast</div>"#);
+        assert_eq!(result, r#"<span>mr.</span><div>shtml</div>"#);
     }
 
     #[test]
@@ -200,12 +197,12 @@ mod tests {
                     <title>head</title>
                 </Head>
                 <Body>
-                    <div>hypebeast</div>
+                    <div>shtml</div>
                 </Body>
             </Html>
         };
 
-        assert_eq!(component.to_string(), "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"\" description=\"\"/><title>head</title></head><body><div>hypebeast</div></body></html>");
+        assert_eq!(component.to_string(), "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"\" description=\"\"/><title>head</title></head><body><div>shtml</div></body></html>");
     }
 
     #[test]

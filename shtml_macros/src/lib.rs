@@ -25,7 +25,7 @@ fn html_macro(input: TokenStream) -> Result<TokenStream2> {
     let parser = Parser::new(config);
 
     let nodes = parser.parse_simple(input)?;
-    let buf = Ident::new("__hypebeast_buf", Span::call_site());
+    let buf = Ident::new("__shtml_buf", Span::call_site());
     let mut output = Output {
         buf: buf.clone(),
         static_string: String::new(),

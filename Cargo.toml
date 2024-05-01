@@ -1,10 +1,10 @@
 [package]
-name = "hypebeast"
+name = "shtml"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-hypebeast_macros = { path = "hypebeast_macros" }
+shtml_macros = { path = "shtml_macros" }
 itoa = "1.0"
 ryu = "1.0"
 

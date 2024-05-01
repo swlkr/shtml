@@ -3,25 +3,6 @@
 version = 3
 
 [[package]]
-name = "hypebeast"
-version = "0.1.0"
-dependencies = [
- "hypebeast_macros",
- "itoa",
- "ryu",
-]
-
-[[package]]
-name = "hypebeast_macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "rstml",
- "syn",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -100,6 +81,25 @@ name = "ryu"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e86697c916019a8588c99b5fac3cead74ec0b4b819707a682fd4d23fa0ce1ba1"
+
+[[package]]
+name = "shtml"
+version = "0.1.0"
+dependencies = [
+ "itoa",
+ "ryu",
+ "shtml_macros",
+]
+
+[[package]]
+name = "shtml_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "rstml",
+ "syn",
+]
 
 [[package]]
 name = "syn"
