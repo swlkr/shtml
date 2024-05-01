@@ -57,8 +57,8 @@ mod tests {
     #[test]
     fn it_works_with_escaped_components() {
         #[allow(non_snake_case)]
-        fn Hello(c: Component) -> Component {
-            html! { {c} }
+        fn Hello(elements: Elements) -> Component {
+            html! { {elements} }
         }
 
         let x = "<script>alert(\"owned\")</script>";
@@ -78,9 +78,9 @@ mod tests {
     #[test]
     fn it_works_with_components_with_children() {
         #[allow(non_snake_case)]
-        fn Hello(name: &str, component: Component) -> Component {
+        fn Hello(name: &str, elements: Elements) -> Component {
             html! {
-                {component}
+                {elements}
                 <div>{name}</div>
             }
         }
@@ -145,17 +145,17 @@ mod tests {
         }
 
         #[allow(non_snake_case)]
-        fn Table(rows: Component) -> Component {
+        fn Table(rows: Elements) -> Component {
             html! { <table>{rows}</table> }
         }
 
         #[allow(non_snake_case)]
-        fn Row(cols: Component) -> Component {
+        fn Row(cols: Elements) -> Component {
             html! { <tr>{cols}</tr> }
         }
 
         #[allow(non_snake_case)]
-        fn Col(i: Component) -> Component {
+        fn Col(i: Elements) -> Component {
             html! { <td>{i}</td> }
         }
 
@@ -183,19 +183,19 @@ mod tests {
     #[test]
     #[allow(non_snake_case)]
     fn it_works_with_multiple_children_components() {
-        fn Html(component: Component) -> Component {
+        fn Html(component: Elements) -> Component {
             html! {
                 <!DOCTYPE html>
                 <html lang="en">{component}</html>
             }
         }
 
-        fn Head(component: Component) -> Component {
+        fn Head(component: Elements) -> Component {
             html! { <head>{component}</head> }
         }
 
         #[allow(non_snake_case)]
-        fn Body(component: Component) -> Component {
+        fn Body(component: Elements) -> Component {
             html! { <body>{component}</body> }
         }
 
@@ -213,7 +213,60 @@ mod tests {
 
         assert_eq!(component.to_string(), "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"\" description=\"\"/><title>head</title></head><body><div>hypebeast</div></body></html>");
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn it_works_with_fragments() {
+        fn HStack(elements: Elements) -> Component {
+            html! { <div class="flex gap-4">{elements}</div> }
+        }
+
+        let component = html! {
+            <HStack>
+                <>
+                    <div>1</div>
+                    <div>2</div>
+                    <div>3</div>
+                </>
+            </HStack>
+        };
+
+        assert_eq!(
+            component.to_string(),
+            r#"<div class="flex gap-4"><div>1</div><div>2</div><div>3</div></div>"#
+        );
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn it_works_with_fragments_and_components() {
+        fn HStack(elements: Elements) -> Component {
+            html! { <div class="flex gap-4">{elements}</div> }
+        }
+
+        fn VStack(elements: Elements) -> Component {
+            html! { <div class="flex flex-col gap-4">{elements}</div> }
+        }
+
+        let component = html! {
+            <HStack>
+                <>
+                    <VStack>
+                        <div>1</div>
+                        <div>2</div>
+                    </VStack>
+                </>
+            </HStack>
+        };
+
+        assert_eq!(
+            component.to_string(),
+            r#"<div class="flex gap-4"><div class="flex flex-col gap-4"><div>1</div><div>2</div></div></div>"#
+        );
+    }
 }
+
+pub type Elements = Component;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Component {

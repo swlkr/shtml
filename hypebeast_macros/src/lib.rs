@@ -60,7 +60,11 @@ fn render(output: &mut Output, node: &Node) {
                 .push_str(&d.value.to_token_stream_string());
             output.push_str(">");
         }
-        Node::Fragment(_) => todo!(),
+        Node::Fragment(n) => {
+            for node in &n.children {
+                render(output, &node)
+            }
+        }
         Node::Element(n) => {
             let component_name = match &n.name() {
                 rstml::node::NodeName::Path(syn::ExprPath { path, .. }) => match path.get_ident() {
@@ -117,10 +121,6 @@ fn render(output: &mut Output, node: &Node) {
 
                     let tokens = quote! { #fn_name(#(#inputs,)*) };
 
-                    let buf = &output.buf;
-                    let tokens = quote! {
-                        #tokens.render_to_string(&mut #buf);
-                    };
                     output.push_tokens(tokens);
                 }
                 None => {
@@ -141,11 +141,7 @@ fn render(output: &mut Output, node: &Node) {
                                     None => match attr.value() {
                                         Some(expr) => {
                                             output.push_str("=\"");
-                                            let buf = &output.buf;
-                                            let stream = expr.to_token_stream();
-                                            let tokens = quote! {
-                                                #stream.render_to_string(&mut #buf);
-                                            };
+                                            let tokens = expr.to_token_stream();
                                             output.push_tokens(tokens);
                                             output.push_str("\"");
                                         }
@@ -191,11 +187,7 @@ fn render(output: &mut Output, node: &Node) {
             }
         }
         Node::Block(n) => {
-            let buf = &output.buf;
             let tokens = n.to_token_stream();
-            let tokens = quote! {
-                #tokens.render_to_string(&mut #buf);
-            };
             output.push_tokens(tokens);
         }
         Node::Text(n) => output.push_str(&n.value_string()),
@@ -225,6 +217,10 @@ impl Output {
 
     fn push_tokens(&mut self, tokens: TokenStream2) {
         self.push_expr();
+        let buf = &self.buf;
+        let tokens = quote! {
+            #tokens.render_to_string(&mut #buf);
+        };
         self.tokens.push(tokens);
     }
 
