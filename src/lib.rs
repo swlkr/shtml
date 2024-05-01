@@ -11,7 +11,7 @@ mod tests {
             <!DOCTYPE html>
             <html lang="en">
                 <head></head>
-                <body>"hypebeast"</body>
+                <body>hypebeast</body>
             </html>
         }
         .to_string();
@@ -55,6 +55,27 @@ mod tests {
     }
 
     #[test]
+    fn it_works_with_escaped_components() {
+        #[allow(non_snake_case)]
+        fn Hello(c: Component) -> Component {
+            html! { {c} }
+        }
+
+        let x = "<script>alert(\"owned\")</script>";
+        let result = html! {
+            <Hello>
+                <div>{x}</div>
+            </Hello>
+        }
+        .to_string();
+
+        assert_eq!(
+            result,
+            r#"<div>&lt;script&gt;alert(&quot;owned&quot;)&lt;/script&gt;</div>"#
+        );
+    }
+
+    #[test]
     fn it_works_with_components_with_children() {
         #[allow(non_snake_case)]
         fn Hello(name: &str, component: Component) -> Component {
@@ -94,17 +115,14 @@ mod tests {
                     .map(|cols| {
                         html! {
                             <tr>
-
                                 {cols
                                     .iter()
                                     .map(|col| html! { <td>{col}</td> })
                                     .collect::<Vec<_>>()}
-
                             </tr>
                         }
                     })
                     .collect::<Vec<_>>()}
-
             </table>
         };
 
@@ -113,13 +131,89 @@ mod tests {
             "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
         );
     }
-}
 
-#[macro_export]
-macro_rules! raw {
-    ($expr:expr) => {
-        $expr
-    };
+    #[test]
+    fn it_works_for_tables_with_components() {
+        const SIZE: usize = 2;
+        let mut rows = Vec::with_capacity(SIZE);
+        for _ in 0..SIZE {
+            let mut inner = Vec::with_capacity(SIZE);
+            for i in 0..SIZE {
+                inner.push(i);
+            }
+            rows.push(inner);
+        }
+
+        #[allow(non_snake_case)]
+        fn Table(rows: Component) -> Component {
+            html! { <table>{rows}</table> }
+        }
+
+        #[allow(non_snake_case)]
+        fn Row(cols: Component) -> Component {
+            html! { <tr>{cols}</tr> }
+        }
+
+        #[allow(non_snake_case)]
+        fn Col(i: Component) -> Component {
+            html! { <td>{i}</td> }
+        }
+
+        let component = html! {
+            <Table>
+                {rows
+                    .iter()
+                    .map(|cols| {
+                        html! {
+                            <Row>
+                                {cols.iter().map(|i| html! { <Col>{i}</Col> }).collect::<Vec<_>>()}
+                            </Row>
+                        }
+                    })
+                    .collect::<Vec<_>>()}
+            </Table>
+        };
+
+        assert_eq!(
+            component.to_string(),
+            "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
+        );
+    }
+
+    #[test]
+    fn it_works_with_multiple_children_components() {
+        #[allow(non_snake_case)]
+        fn Html(component: Component) -> Component {
+            html! {
+                <!DOCTYPE html>
+                <html lang="en">{component}</html>
+            }
+        }
+
+        #[allow(non_snake_case)]
+        fn Head(component: Component) -> Component {
+            html! { <head>{component}</head> }
+        }
+
+        #[allow(non_snake_case)]
+        fn Body(component: Component) -> Component {
+            html! { <body>{component}</body> }
+        }
+
+        let component = html! {
+            <Html>
+                <Head>
+                    <meta name="" description=""/>
+                    <title>head</title>
+                </Head>
+                <Body>
+                    <div>hypebeast</div>
+                </Body>
+            </Html>
+        };
+
+        assert_eq!(component.to_string(), "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"\" description=\"\"/><title>head</title></head><body><div>hypebeast</div></body></html>");
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -176,6 +270,12 @@ impl Render for Component {
 impl Render for String {
     fn render_to_string(&self, buffer: &mut String) {
         buffer.push_str(&escape(self))
+    }
+}
+
+impl Render for &String {
+    fn render_to_string(&self, buffer: &mut String) {
+        buffer.push_str(&escape(*self))
     }
 }
 

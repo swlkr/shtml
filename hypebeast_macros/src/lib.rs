@@ -97,13 +97,11 @@ fn render(output: &mut Output, node: &Node) {
                         render(&mut inner_output, &node);
                     }
 
-                    match (
-                        inner_output.static_string.is_empty(),
-                        inner_output.tokens.is_empty(),
-                    ) {
-                        (false, _) => {
-                            let buf = inner_output.buf.clone();
-                            let inner_tokens = inner_output.to_token_stream();
+                    let buf = inner_output.buf.clone();
+                    let inner_tokens = inner_output.to_token_stream();
+
+                    match inner_tokens.is_empty() {
+                        false => {
                             let inner_tokens = quote! {
                                 {
                                     let mut #buf = String::new();
