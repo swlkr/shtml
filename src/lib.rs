@@ -3,6 +3,39 @@
 pub use shtml_macros::html;
 use std::borrow::Cow;
 
+#[cfg(feature = "chaos")]
+pub use shtml_macros::component;
+
+#[cfg(feature = "chaos")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_works_with_out_of_order_attr_components() {
+        #[component]
+        fn Chaos(c: String, b: u8, a: &str) -> Component {
+            html! { <div a=a b=b c=c></div> }
+        }
+
+        let result = html! { <Chaos b=0 c="c".into() a="a"/> }.to_string();
+
+        assert_eq!(result, r#"<div a="a" b="0" c="c"></div>"#);
+    }
+
+    #[test]
+    fn it_works_with_out_of_order_attr_components_without_refs() {
+        #[component]
+        fn Chaos(b: u8, c: String) -> Component {
+            html! { <div c=c b=b></div> }
+        }
+        let result = html! { <Chaos c="c".into() b=0/> }.to_string();
+
+        assert_eq!(result, r#"<div c="c" b="0"></div>"#);
+    }
+}
+
+#[cfg(not(feature = "chaos"))]
 #[cfg(test)]
 mod tests {
     use super::*;

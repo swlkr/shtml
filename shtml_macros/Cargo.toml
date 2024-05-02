@@ -1,6 +1,6 @@
 [package]
 name = "shtml_macros"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [lib]
@@ -11,3 +11,6 @@ proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["full", "extra-traits", "parsing"] }
 rstml = { version = "0.11" }
+
+[features]
+chaos = []

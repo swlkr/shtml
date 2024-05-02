@@ -1,10 +1,11 @@
-use std::{collections::HashSet, fmt::Debug};
+mod chaos;
 
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use rstml::{self, node::Node, Parser, ParserConfig};
-use syn::{Ident, LitStr, Result};
+use std::{collections::HashSet, fmt::Debug};
+use syn::{parse_macro_input, Ident, ItemFn, LitStr, Result};
 
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
@@ -89,7 +90,14 @@ fn render(output: &mut Output, node: &Node) {
                         .map(|attr| match attr {
                             rstml::node::NodeAttribute::Block(_) => todo!(),
                             rstml::node::NodeAttribute::Attribute(attr) => {
+                                #[cfg(feature = "chaos")]
+                                let key = &attr.key;
                                 let value = attr.value();
+
+                                #[cfg(feature = "chaos")]
+                                quote! { #key: #value }
+
+                                #[cfg(not(feature = "chaos"))]
                                 quote! { #value }
                             }
                         })
@@ -119,6 +127,10 @@ fn render(output: &mut Output, node: &Node) {
                         _ => {}
                     }
 
+                    #[cfg(feature = "chaos")]
+                    let tokens = quote! { #fn_name { #(#inputs,)* } };
+
+                    #[cfg(not(feature = "chaos"))]
                     let tokens = quote! { #fn_name(#(#inputs,)*) };
 
                     output.push_tokens(tokens);
@@ -240,5 +252,14 @@ impl Output {
     fn to_token_stream(mut self) -> TokenStream2 {
         self.push_expr();
         self.tokens.into_iter().collect()
+    }
+}
+
+#[proc_macro_attribute]
+pub fn component(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let item_fn = parse_macro_input!(input as ItemFn);
+    match chaos::component_macro(item_fn) {
+        Ok(s) => s.to_token_stream().into(),
+        Err(e) => e.to_compile_error().into(),
     }
 }

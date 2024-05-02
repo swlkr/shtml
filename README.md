@@ -196,6 +196,28 @@ let result = html! {
 // <ul><li>1</li><li>2</li><li>3</li></ul>
 ```
 
+# Feature flags
+
+- chaos
+
+The `chaos` feature flag requires that you annotate all component functions with a `#[component]` macro attribute and allows you to specify any attr order:
+
+```rust
+#[component]
+fn Chaos(a: &str, b: u8, c: String) -> Component {
+    html! { <div a=a b=b c=c></div> }
+}
+let result = html! { <Chaos b=0 c="c".into() a="a"/> }.to_string();
+
+// <div a="a" b="0" c="c"></div>
+
+// without the chaos feature flag you need to specify the attrs
+// in the same order as the fn args
+html! {
+    <Chaos a="a" b=0 c="c".into() />
+}
+```
+
 # Tips and tricks
 
 - [leptosfmt](https://github.com/bram209/leptosfmt) with this override `rustfmt = { overrideCommand = ["leptosfmt", "--stdin", "--rustfmt", "--override-macro-names", "html"] }`
