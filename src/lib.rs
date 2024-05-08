@@ -358,6 +358,14 @@ mod tests {
 
         assert_eq!(result, r#"<div>Hi</div>"#);
     }
+
+    #[test]
+    fn it_works_with_string_refs() {
+        let string_ref = &"Hi".to_string();
+        let result = html! { <div>{string_ref}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>Hi</div>"#);
+    }
 }
 
 pub type Elements = Component;
@@ -416,12 +424,6 @@ impl Render for Component {
 impl Render for String {
     fn render_to_string(&self, buffer: &mut String) {
         buffer.push_str(&escape(self))
-    }
-}
-
-impl Render for &String {
-    fn render_to_string(&self, buffer: &mut String) {
-        buffer.push_str(&escape(*self))
     }
 }
 
