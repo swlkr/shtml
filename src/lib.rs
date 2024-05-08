@@ -334,6 +334,30 @@ mod tests {
             r#"<div class="flex gap-4"><div class="flex flex-col gap-4"><div>1</div><div>2</div></div></div>"#
         );
     }
+
+    #[test]
+    fn it_works_with_floats() {
+        let x = 3.14;
+        let result = html! { <div>{x}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>3.14</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_special_characters() {
+        let special_characters = "<>&\"'";
+        let result = html! { <div>{special_characters}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>&lt;&gt;&amp;&quot;&#39;</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_strings() {
+        let string = "Hi".to_string();
+        let result = html! { <div>{string}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>Hi</div>"#);
+    }
 }
 
 pub type Elements = Component;
