@@ -5,7 +5,7 @@ shtml is a rust library for rendering html.
 ## Installation
 
 ```
-cargo add https://github.com/swlkr/shtml
+cargo add --git https://github.com/swlkr/shtml shtml
 ```
 
 ## Examples
