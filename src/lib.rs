@@ -1,44 +1,17 @@
 #![allow(non_snake_case)]
+#![no_std]
+
+extern crate alloc;
+use alloc::{borrow::Cow, string::String, vec::Vec};
+use core::fmt;
 
 pub use shtml_macros::html;
-use std::borrow::Cow;
-
-#[cfg(feature = "chaos")]
-pub use shtml_macros::component;
-
-#[cfg(feature = "chaos")]
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works_with_out_of_order_attr_components() {
-        #[component]
-        fn Chaos(c: String, b: u8, a: &str) -> Component {
-            html! { <div a=a b=b c=c></div> }
-        }
-
-        let result = html! { <Chaos b=0 c="c".into() a="a"/> }.to_string();
-
-        assert_eq!(result, r#"<div a="a" b="0" c="c"></div>"#);
-    }
-
-    #[test]
-    fn it_works_with_out_of_order_attr_components_without_refs() {
-        #[component]
-        fn Chaos(b: u8, c: String) -> Component {
-            html! { <div c=c b=b></div> }
-        }
-        let result = html! { <Chaos c="c".into() b=0/> }.to_string();
-
-        assert_eq!(result, r#"<div c="c" b="0"></div>"#);
-    }
-}
 
 #[cfg(not(feature = "chaos"))]
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::{string::ToString, vec::Vec};
 
     #[test]
     fn it_works() {
@@ -300,7 +273,7 @@ mod tests {
             html! { <li>{elements}</li> }
         }
 
-        let items = vec![1, 2, 3];
+        let items = Vec::from([1, 2, 3]);
 
         let component = html! { <List>{items.iter().map(|i| html! { <Item>{i}</Item> }).collect::<Vec<_>>()}</List> };
 
@@ -442,8 +415,8 @@ where
     }
 }
 
-impl std::fmt::Display for Component {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Component {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_fmt(format_args!("{}", self.html))
     }
 }
@@ -471,5 +444,38 @@ pub fn escape<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
         Cow::Owned(output)
     } else {
         input
+    }
+}
+
+#[cfg(feature = "chaos")]
+pub use shtml_macros::component;
+
+#[cfg(feature = "chaos")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloc::string::ToString;
+
+    #[test]
+    fn it_works_with_out_of_order_attr_components() {
+        #[component]
+        fn Chaos(c: String, b: u8, a: &str) -> Component {
+            html! { <div a=a b=b c=c></div> }
+        }
+
+        let result = html! { <Chaos b=0 c="c".into() a="a"/> }.to_string();
+
+        assert_eq!(result, r#"<div a="a" b="0" c="c"></div>"#);
+    }
+
+    #[test]
+    fn it_works_with_out_of_order_attr_components_without_refs() {
+        #[component]
+        fn Chaos(b: u8, c: String) -> Component {
+            html! { <div c=c b=b></div> }
+        }
+        let result = html! { <Chaos c="c".into() b=0/> }.to_string();
+
+        assert_eq!(result, r#"<div c="c" b="0"></div>"#);
     }
 }
