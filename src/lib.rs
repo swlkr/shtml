@@ -339,6 +339,14 @@ mod tests {
 
         assert_eq!(result, r#"<div>Hi</div>"#);
     }
+
+    #[test]
+    fn it_works_with_spread_attributes() {
+        let attrs = Vec::from([ ("data-string".to_string(), "string".to_string() ) ]);
+        let result = html! { <div {..attrs}>Test</div> }.to_string();
+
+        assert_eq!(result, r#"<div data-string="string">Test</div>"#);
+    }
 }
 
 pub type Elements = Component;
@@ -412,6 +420,22 @@ where
 {
     fn render_to_string(&self, buffer: &mut String) {
         self.iter().for_each(|s| s.render_to_string(buffer));
+    }
+}
+
+impl <T> Render for Vec<(T, T)>
+where
+    T: Render,
+{
+    fn render_to_string(&self, buffer: &mut String) {
+        self.iter().for_each(|(key, value)| {
+            buffer.push_str(" ");
+            key.render_to_string(buffer);
+            buffer.push_str("=");
+            buffer.push_str(r#"""#);
+            value.render_to_string(buffer);
+            buffer.push_str(r#"""#);
+        });
     }
 }
 
