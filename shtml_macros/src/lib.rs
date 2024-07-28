@@ -150,22 +150,9 @@ fn render(output: &mut Output, node: &Node) {
                                                         syn::Expr::Range(expr_range) => {
                                                             match &expr_range.end {
                                                                 Some(box_expr) => {
-                                                                    let expr = *box_expr.clone();
-                                                                    match expr {
-                                                                        syn::Expr::Path(expr_path) => {
-                                                                            match expr_path.path.get_ident() {
-                                                                                Some(ident) => {
-                                                                                    let tokens = quote! {
-                                                                                        #ident
-                                                                                    };
+                                                                    let tokens = (*box_expr.clone()).to_token_stream();
 
-                                                                                    output.push_tokens(tokens);
-                                                                                }
-                                                                                None => {}
-                                                                            }
-                                                                        }
-                                                                        _ => {}
-                                                                    }
+                                                                    output.push_tokens(tokens);
                                                                 }
                                                                 _ => {}
                                                             }

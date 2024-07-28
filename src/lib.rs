@@ -342,10 +342,18 @@ mod tests {
 
     #[test]
     fn it_works_with_spread_attributes() {
-        let attrs = Vec::from([ ("data-string".to_string(), "string".to_string() ) ]);
-        let result = html! { <div {..attrs}>Test</div> }.to_string();
+        struct Props {
+            pub rest: Vec<(String, String)>
+        }
+        let attrs = Vec::from([ ("data-attrs".to_string(), "attrs".to_string() ) ]);
 
-        assert_eq!(result, r#"<div data-string="string">Test</div>"#);
+        let props = Props {
+            rest: Vec::from([ ("data-props".to_string(), "props".to_string() ) ]),
+        };
+
+        let result = html! { <div {..props.rest} {..attrs}>Test</div> }.to_string();
+
+        assert_eq!(result, r#"<div data-props="props" data-attrs="attrs">Test</div>"#);
     }
 }
 
