@@ -140,7 +140,33 @@ fn render(output: &mut Output, node: &Node) {
                     output.push_str(&n.open_tag.name.to_string());
                     for attr in &n.open_tag.attributes {
                         match attr {
-                            rstml::node::NodeAttribute::Block(_) => todo!(),
+                            rstml::node::NodeAttribute::Block(block) => {
+                                match block {
+                                    rstml::node::NodeBlock::ValidBlock(valid_block) => {
+                                        for stmt in &valid_block.stmts {
+                                            match stmt {
+                                                syn::Stmt::Expr(expr_expr, _expr_semi) => {
+                                                    match expr_expr {
+                                                        syn::Expr::Range(expr_range) => {
+                                                            match &expr_range.end {
+                                                                Some(box_expr) => {
+                                                                    let tokens = (*box_expr.clone()).to_token_stream();
+
+                                                                    output.push_tokens(tokens);
+                                                                }
+                                                                _ => {}
+                                                            }
+                                                        }
+                                                        _ => {}
+                                                    }
+                                                }
+                                                _ => {}
+                                            }
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            },
                             rstml::node::NodeAttribute::Attribute(attr) => {
                                 output.static_string.push(' ');
                                 output.push_str(&attr.key.to_string());
