@@ -1,6 +1,6 @@
 # shtml
 
-shtml is a rust library for rendering html.
+shtml is a rust library for rendering html to a String.
 
 ## Installation
 
@@ -13,7 +13,7 @@ cargo add --git https://github.com/swlkr/shtml shtml
 Just write or copy/paste plain old html
 
 ```rust
-use shtml::{html, Elements, Component, Render};
+use shtml::{html, component, Component, Render};
 
 let result = html! {
     <!DOCTYPE html>
@@ -65,10 +65,9 @@ let result = html! { <div>{x}</div> }.to_string();
 Components work like jsx
 
 ```rust
-#![allow(non_snake_case)]
-
-fn HStack(elements: Elements) -> Component {
-    html! { <div class="flex gap-4">{elements}</div> }
+#[component]
+fn HStack(children: Component) {
+    html! { <div class="flex gap-4">{children}</div> }
 }
 
 let component = html! {
@@ -85,9 +84,8 @@ let component = html! {
 Attrs with components work as well
 
 ```rust
-#![allow(non_snake_case)]
-
-fn Hypermedia(target: &str) -> Component {
+#[component]
+fn Hypermedia(target: &str) {
     html! { <div x-target=target></div> }
 }
 
@@ -100,14 +98,14 @@ let result = html! { <Hypermedia target=x/> }.to_string();
 Nested components
 
 ```rust
-#![allow(non_snake_case)]
-
-fn HStack(elements: Elements) -> Component {
-    html! { <div class="flex gap-4">{elements}</div> }
+#[component]
+fn HStack(children: Component) {
+    html! { <div class="flex gap-4">{children}</div> }
 }
 
-fn VStack(elements: Elements) -> Component {
-    html! { <div class="flex flex-col gap-4">{elements}</div> }
+#[component]
+fn VStack(children: Component) {
+    html! { <div class="flex flex-col gap-4">{children}</div> }
 }
 
 let component = html! {
@@ -125,8 +123,8 @@ let component = html! {
 Attrs + nested components
 
 ```rust
-fn Heading(class: &str, els: Elements) -> Component {
-    html! { <h1 class=class>{els}</h1> }
+fn Heading(class: &str, children: Component) -> Component {
+    html! { <h1 class=class>{children}</h1> }
 }
 
 let result = html! {
@@ -141,14 +139,14 @@ let result = html! {
 Fragments just pass through their children
 
 ```rust
-#![allow(non_snake_case)]
-
-fn HStack(elements: Elements) -> Component {
-    html! { <div class="flex gap-4">{elements}</div> }
+#[component]
+fn HStack(children: Component) {
+    html! { <div class="flex gap-4">{children}</div> }
 }
 
-fn VStack(elements: Elements) -> Component {
-    html! { <div class="flex flex-col gap-4">{elements}</div> }
+#[component]
+fn VStack(children: Componetn) {
+    html! { <div class="flex flex-col gap-4">{children}</div> }
 }
 
 let component = html! {
@@ -165,17 +163,15 @@ let component = html! {
 // <div class="flex gap-4"><div class="flex flex-col gap-4"><div>1</div><div>2</div></div></div>
 ```
 
-The `Render` trait is only implemented for `Vec<T: Render>`
-
 ```rust
-#![allow(non_snake_case)]
-
-fn List(elements: Elements) -> Component {
-    html! { <ul>{elements}</ul> }
+#[component]
+fn List(children: Component) {
+    html! { <ul>{children}</ul> }
 }
 
-fn Item(elements: Elements) -> Component {
-    html! { <li>{elements}</li> }
+#[component]
+fn Item(children: Component) {
+    html! { <li>{children}</li> }
 }
 
 let items = vec![1, 2, 3];
@@ -188,34 +184,11 @@ let result = html! {
         .map(|i| html! {
           <Item>{i}</Item>
         })
-        .collect::<Vec<_>>()
     }
   </List>
 }.to_string();
 
 // <ul><li>1</li><li>2</li><li>3</li></ul>
-```
-
-# Feature flags
-
-- chaos
-
-The `chaos` feature flag requires that you annotate all component functions with a `#[component]` macro attribute and allows you to specify any attr order:
-
-```rust
-#[component]
-fn Chaos(a: &str, b: u8, c: String) -> Component {
-    html! { <div a=a b=b c=c></div> }
-}
-let result = html! { <Chaos b=0 c="c".into() a="a"/> }.to_string();
-
-// <div a="a" b="0" c="c"></div>
-
-// without the chaos feature flag you need to specify the attrs
-// in the same order as the fn args
-html! {
-    <Chaos a="a" b=0 c="c".into() />
-}
 ```
 
 # Tips and tricks

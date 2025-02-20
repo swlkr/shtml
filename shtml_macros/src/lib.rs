@@ -1,11 +1,32 @@
-mod chaos;
+mod component;
 
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use rstml::{self, node::Node, Parser, ParserConfig};
 use std::{collections::HashSet, fmt::Debug};
-use syn::{parse_macro_input, Ident, ItemFn, LitStr, Result};
+use syn::{parse_macro_input, DeriveInput, Ident, ItemFn, LitStr, Result};
+
+#[proc_macro_derive(Render)]
+pub fn derive_render(s: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(s as DeriveInput);
+    match derive_render_macro(input) {
+        Ok(s) => s.to_token_stream().into(),
+        Err(e) => e.to_compile_error().into(),
+    }
+}
+
+fn derive_render_macro(input: DeriveInput) -> Result<TokenStream2> {
+    let ident = input.ident;
+    let generics = input.generics;
+    Ok(quote! {
+      impl #generics shtml::Render for #ident #generics {
+        fn render_to_string(&self, buffer: &mut String) {
+            buffer.push_str(&self.to_string());
+        }
+      }
+    })
+}
 
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
@@ -42,7 +63,7 @@ fn html_macro(input: TokenStream) -> Result<TokenStream2> {
         {
             let mut #buf = String::with_capacity(#size_hint);
             #tokens
-            Component { html: #buf }
+            shtml::Component { html: #buf }
         }
     })
 }
@@ -87,19 +108,14 @@ fn render(output: &mut Output, node: &Node) {
                         .open_tag
                         .attributes
                         .iter()
-                        .map(|attr| match attr {
-                            rstml::node::NodeAttribute::Block(_) => todo!(),
+                        .filter_map(|attr| match attr {
                             rstml::node::NodeAttribute::Attribute(attr) => {
-                                #[cfg(feature = "chaos")]
                                 let key = &attr.key;
                                 let value = attr.value();
 
-                                #[cfg(feature = "chaos")]
-                                quote! { #key: #value }
-
-                                #[cfg(not(feature = "chaos"))]
-                                quote! { #value }
+                                Some(quote! { #key: #value })
                             }
+                            _ => None,
                         })
                         .collect::<Vec<_>>();
 
@@ -115,10 +131,10 @@ fn render(output: &mut Output, node: &Node) {
                     match inner_tokens.is_empty() {
                         false => {
                             let inner_tokens = quote! {
-                                {
+                                children: {
                                     let mut #buf = String::new();
                                     #inner_tokens
-                                    Component { html: #buf }
+                                    shtml::Component { html: #buf }
                                 }
                             };
 
@@ -127,11 +143,7 @@ fn render(output: &mut Output, node: &Node) {
                         _ => {}
                     }
 
-                    #[cfg(feature = "chaos")]
                     let tokens = quote! { #fn_name { #(#inputs,)* } };
-
-                    #[cfg(not(feature = "chaos"))]
-                    let tokens = quote! { #fn_name(#(#inputs,)*) };
 
                     output.push_tokens(tokens);
                 }
@@ -140,32 +152,31 @@ fn render(output: &mut Output, node: &Node) {
                     output.push_str(&n.open_tag.name.to_string());
                     for attr in &n.open_tag.attributes {
                         match attr {
-                            rstml::node::NodeAttribute::Block(block) => {
-                                match block {
-                                    rstml::node::NodeBlock::ValidBlock(valid_block) => {
-                                        for stmt in &valid_block.stmts {
-                                            match stmt {
-                                                syn::Stmt::Expr(expr_expr, _expr_semi) => {
-                                                    match expr_expr {
-                                                        syn::Expr::Range(expr_range) => {
-                                                            match &expr_range.end {
-                                                                Some(box_expr) => {
-                                                                    let tokens = (*box_expr.clone()).to_token_stream();
+                            rstml::node::NodeAttribute::Block(block) => match block {
+                                rstml::node::NodeBlock::ValidBlock(valid_block) => {
+                                    for stmt in &valid_block.stmts {
+                                        match stmt {
+                                            syn::Stmt::Expr(expr_expr, _expr_semi) => {
+                                                match expr_expr {
+                                                    syn::Expr::Range(expr_range) => {
+                                                        match &expr_range.end {
+                                                            Some(box_expr) => {
+                                                                let tokens = (*box_expr.clone())
+                                                                    .to_token_stream();
 
-                                                                    output.push_tokens(tokens);
-                                                                }
-                                                                _ => {}
+                                                                output.push_tokens(tokens);
                                                             }
+                                                            _ => {}
                                                         }
-                                                        _ => {}
                                                     }
+                                                    _ => {}
                                                 }
-                                                _ => {}
                                             }
+                                            _ => {}
                                         }
                                     }
-                                    _ => {}
                                 }
+                                _ => {}
                             },
                             rstml::node::NodeAttribute::Attribute(attr) => {
                                 output.static_string.push(' ');
@@ -178,8 +189,8 @@ fn render(output: &mut Output, node: &Node) {
                                     }
                                     None => match attr.value() {
                                         Some(expr) => {
-                                            output.push_str("=\"");
                                             let tokens = expr.to_token_stream();
+                                            output.push_str("=\"");
                                             output.push_tokens(tokens);
                                             output.push_str("\"");
                                         }
@@ -284,7 +295,7 @@ impl Output {
 #[proc_macro_attribute]
 pub fn component(_args: TokenStream, input: TokenStream) -> TokenStream {
     let item_fn = parse_macro_input!(input as ItemFn);
-    match chaos::component_macro(item_fn) {
+    match component::component_macro(item_fn) {
         Ok(s) => s.to_token_stream().into(),
         Err(e) => e.to_compile_error().into(),
     }

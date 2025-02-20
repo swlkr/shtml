@@ -31,7 +31,7 @@ pub fn component_macro(item_fn: ItemFn) -> Result<TokenStream2> {
         .map(|(i, fn_arg)| match fn_arg {
             syn::FnArg::Receiver(_) => unimplemented!(),
             syn::FnArg::Typed(PatType { pat, ty, .. }) => match &**ty {
-                Type::Path(type_path) => (None, quote! { #pat: #type_path }),
+                Type::Path(type_path) => (None, quote! { pub #pat: #type_path }),
                 Type::Reference(TypeReference {
                     and_token,
                     lifetime,
@@ -82,15 +82,15 @@ pub fn component_macro(item_fn: ItemFn) -> Result<TokenStream2> {
         }
 
         impl #lifetime_tokens #ident #lifetime_tokens {
-            pub fn to_component(&self) -> Component {
+            pub fn to_component(&self) -> shtml::Component {
                 let Self { #(#field_names,)* } = self;
                 #block
             }
         }
 
-        impl #lifetime_tokens Render for #ident #lifetime_tokens {
+        impl #lifetime_tokens shtml::Render for #ident #lifetime_tokens {
             fn render_to_string(&self, buffer: &mut String) {
-                buffer.push_str(&self.to_component().to_string())
+                self.to_component().render_to_string(buffer)
             }
         }
     };
