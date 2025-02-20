@@ -11,394 +11,394 @@ mod tests {
     use alloc::{string::String, string::ToString, vec::Vec};
     use shtml::{component, html, Component, Render};
 
-    //     #[test]
-    //     fn it_works() {
-    //         let result = html! {
-    //             <!DOCTYPE html>
-    //             <html lang="en">
-    //                 <head></head>
-    //                 <body>shtml</body>
-    //             </html>
-    //         }
-    //         .to_string();
-
-    //         assert_eq!(
-    //             result,
-    //             r#"<!DOCTYPE html><html lang="en"><head></head><body>shtml</body></html>"#
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_blocks() {
-    //         let x = 1;
-    //         let result = html! { <div>{x}</div> }.to_string();
-
-    //         assert_eq!(result, r#"<div>1</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_attr_blocks() {
-    //         let class = "flex items-center h-full";
-    //         let result = html! { <div class=class></div> }.to_string();
-
-    //         assert_eq!(result, r#"<div class="flex items-center h-full"></div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_components() {
-    //         #[component]
-    //         fn Hello(name: &str) {
-    //             html! { <div>{name}</div> }
-    //         }
-
-    //         let x = "<script>shtml</script>";
-    //         let result = html! { <Hello name=x/> }.to_string();
-
-    //         assert_eq!(result, r#"<div>&lt;script&gt;shtml&lt;/script&gt;</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_attrs() {
-    //         #[component]
-    //         fn Hypermedia(target: &str) {
-    //             html! { <div x-target=target></div> }
-    //         }
-
-    //         let x = "body";
-    //         let result = html! { <Hypermedia target=x/> }.to_string();
-
-    //         assert_eq!(result, r#"<div x-target="body"></div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_types_that_impl_display() {
-    //         #[derive(shtml::Render)]
-    //         struct Example;
-
-    //         impl core::fmt::Display for Example {
-    //             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    //                 f.write_str("example")
-    //             }
-    //         }
-
-    //         let ex = Example {};
-    //         let result = html! { <div x-example=ex></div> }.to_string();
-
-    //         assert_eq!(result, r#"<div x-example="example"></div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_escaped_components() {
-    //         #[component]
-    //         fn Hello(children: Component) {
-    //             html! { {children} }
-    //         }
-
-    //         let x = "<script>alert(\"owned\")</script>";
-    //         let result = html! {
-    //             <Hello>
-    //                 <div>{x}</div>
-    //             </Hello>
-    //         }
-    //         .to_string();
-
-    //         assert_eq!(
-    //             result,
-    //             r#"<div>&lt;script&gt;alert(&quot;owned&quot;)&lt;/script&gt;</div>"#
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_components_with_attrs_and_children() {
-    //         #[component]
-    //         fn Heading(class: &str, children: Component) {
-    //             html! { <h1 class=class>{children}</h1> }
-    //         }
-
-    //         let result = html! {
-    //             <Heading class="text-7xl text-red-500">
-    //                 <p>How now brown cow</p>
-    //             </Heading>
-    //         };
-
-    //         assert_eq!(
-    //             result.to_string(),
-    //             r#"<h1 class="text-7xl text-red-500"><p>How now brown cow</p></h1>"#
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_components_with_children() {
-    //         #[component]
-    //         fn Hello(name: &str, children: Component) {
-    //             html! {
-    //                 {children}
-    //                 <div>{name}</div>
-    //             }
-    //         }
-
-    //         let x = "shtml";
-    //         let result = html! {
-    //             <Hello name=x>
-    //                 <span>"mr."</span>
-    //             </Hello>
-    //         }
-    //         .to_string();
-
-    //         assert_eq!(result, r#"<span>mr.</span><div>shtml</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_for_tables() {
-    //         const SIZE: usize = 2;
-    //         let mut rows = Vec::with_capacity(SIZE);
-    //         for _ in 0..SIZE {
-    //             let mut inner = Vec::with_capacity(SIZE);
-    //             for i in 0..SIZE {
-    //                 inner.push(i);
-    //             }
-    //             rows.push(inner);
-    //         }
-
-    //         let component = html! {
-    //             <table>
-    //                 {rows
-    //                     .iter()
-    //                     .map(|cols| {
-    //                         html! {
-    //                             <tr>
-    //                                 {cols
-    //                                     .iter()
-    //                                     .map(|col| html! { <td>{col}</td> })}
-    //                             </tr>
-    //                         }
-    //                     })}
-    //             </table>
-    //         };
-
-    //         assert_eq!(
-    //             component.to_string(),
-    //             "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_for_tables_with_components() {
-    //         const SIZE: usize = 2;
-    //         let mut rows = Vec::with_capacity(SIZE);
-    //         for _ in 0..SIZE {
-    //             let mut inner = Vec::with_capacity(SIZE);
-    //             for i in 0..SIZE {
-    //                 inner.push(i);
-    //             }
-    //             rows.push(inner);
-    //         }
-
-    //         #[component]
-    //         fn Table(children: Component) {
-    //             html! { <table>{children}</table> }
-    //         }
-
-    //         #[component]
-    //         fn Row(children: Component) {
-    //             html! { <tr>{children}</tr> }
-    //         }
-
-    //         #[component]
-    //         fn Col(children: Component) {
-    //             html! { <td>{children}</td> }
-    //         }
-
-    //         let component = html! {
-    //             <Table>
-    //                 {rows
-    //                     .iter()
-    //                     .map(|cols| {
-    //                         html! {
-    //                             <Row>
-    //                                 {cols.iter().map(|i| html! { <Col>{i}</Col> })}
-    //                             </Row>
-    //                         }
-    //                     })}
-    //             </Table>
-    //         };
-
-    //         assert_eq!(
-    //             component.to_string(),
-    //             "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_multiple_children_components() {
-    //         #[component]
-    //         fn Html(children: Component) {
-    //             html! {
-    //                 <!DOCTYPE html>
-    //                 <html lang="en">{children}</html>
-    //             }
-    //         }
-
-    //         #[component]
-    //         fn Head(children: Component) {
-    //             html! { <head>{children}</head> }
-    //         }
-
-    //         #[component]
-    //         fn Body(children: Component) {
-    //             html! { <body>{children}</body> }
-    //         }
-
-    //         let component = html! {
-    //             <Html>
-    //                 <Head>
-    //                     <meta name="" description=""/>
-    //                     <title>head</title>
-    //                 </Head>
-    //                 <Body>
-    //                     <div>shtml</div>
-    //                 </Body>
-    //             </Html>
-    //         };
-
-    //         assert_eq!(component.to_string(), "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"\" description=\"\"/><title>head</title></head><body><div>shtml</div></body></html>");
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_fragments() {
-    //         #[component]
-    //         fn HStack(children: Component) {
-    //             html! { <div class="flex gap-4">{children}</div> }
-    //         }
-
-    //         let component = html! {
-    //             <HStack>
-    //                 <>
-    //                     <div>1</div>
-    //                     <div>2</div>
-    //                     <div>3</div>
-    //                 </>
-    //             </HStack>
-    //         };
-
-    //         assert_eq!(
-    //             component.to_string(),
-    //             r#"<div class="flex gap-4"><div>1</div><div>2</div><div>3</div></div>"#
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_simple_loops() {
-    //         #[component]
-    //         fn List(children: Component) {
-    //             html! { <ul>{children}</ul> }
-    //         }
-
-    //         #[component]
-    //         fn Item(children: Component) {
-    //             html! { <li>{children}</li> }
-    //         }
-
-    //         let items = Vec::from([1, 2, 3]);
-
-    //         let component = html! { <List>{items.iter().map(|i| html! { <Item>{i}</Item> })}</List> };
-
-    //         assert_eq!(
-    //             component.to_string(),
-    //             r#"<ul><li>1</li><li>2</li><li>3</li></ul>"#
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_fragments_and_components() {
-    //         #[component]
-    //         fn HStack(children: Component) {
-    //             html! { <div class="flex gap-4">{children}</div> }
-    //         }
-
-    //         #[component]
-    //         fn VStack(children: Component) {
-    //             html! { <div class="flex flex-col gap-4">{children}</div> }
-    //         }
-
-    //         let component = html! {
-    //             <HStack>
-    //                 <VStack>
-    //                     <div>1</div>
-    //                     <div>2</div>
-    //                 </VStack>
-    //             </HStack>
-    //         };
-
-    //         assert_eq!(
-    //             component.to_string(),
-    //             r#"<div class="flex gap-4"><div class="flex flex-col gap-4"><div>1</div><div>2</div></div></div>"#
-    //         );
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_floats() {
-    //         let x = 3.14;
-    //         let result = html! { <div>{x}</div> }.to_string();
-
-    //         assert_eq!(result, r#"<div>3.14</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_special_characters() {
-    //         let special_characters = "<>&\"'";
-    //         let result = html! { <div>{special_characters}</div> }.to_string();
-
-    //         assert_eq!(result, r#"<div>&lt;&gt;&amp;&quot;&#39;</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_strings() {
-    //         let string = "Hi".to_string();
-    //         let result = html! { <div>{string}</div> }.to_string();
-
-    //         assert_eq!(result, r#"<div>Hi</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_string_refs() {
-    //         let string_ref = &"Hi".to_string();
-    //         let result = html! { <div>{string_ref}</div> }.to_string();
-
-    //         assert_eq!(result, r#"<div>Hi</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_spread_attributes() {
-    //         let attrs = Vec::from([("data-test".to_string(), "test".to_string())]);
-
-    //         let result = html! { <div {..attrs}>Test</div> }.to_string();
-
-    //         assert_eq!(result, r#"<div data-test="test">Test</div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_out_of_order_attr_components() {
-    //         #[component]
-    //         fn OutOfOrderWithLifetimes(c: String, b: u8, a: &str) {
-    //             html! { <div a=a b=b c=c></div> }
-    //         }
-
-    //         let result = html! { <OutOfOrderWithLifetimes b=0 c="c".into() a="a"/> }.to_string();
-
-    //         assert_eq!(result, r#"<div a="a" b="0" c="c"></div>"#);
-    //     }
-
-    //     #[test]
-    //     fn it_works_with_out_of_order_attr_components_without_refs() {
-    //         #[component]
-    //         fn OutOfOrder(b: u8, c: String) {
-    //             html! { <div c=c b=b></div> }
-    //         }
-    //         let result = html! { <OutOfOrder c="c".into() b=0/> }.to_string();
-
-    //         assert_eq!(result, r#"<div c="c" b="0"></div>"#);
-    //     }
+    #[test]
+    fn it_works() {
+        let result = html! {
+            <!DOCTYPE html>
+            <html lang="en">
+                <head></head>
+                <body>shtml</body>
+            </html>
+        }
+        .to_string();
+
+        assert_eq!(
+            result,
+            r#"<!DOCTYPE html><html lang="en"><head></head><body>shtml</body></html>"#
+        );
+    }
+
+    #[test]
+    fn it_works_with_blocks() {
+        let x = 1;
+        let result = html! { <div>{x}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>1</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_attr_blocks() {
+        let class = "flex items-center h-full";
+        let result = html! { <div class=class></div> }.to_string();
+
+        assert_eq!(result, r#"<div class="flex items-center h-full"></div>"#);
+    }
+
+    #[test]
+    fn it_works_with_components() {
+        #[component]
+        fn Hello(name: &str) {
+            html! { <div>{name}</div> }
+        }
+
+        let x = "<script>shtml</script>";
+        let result = html! { <Hello name=x/> }.to_string();
+
+        assert_eq!(result, r#"<div>&lt;script&gt;shtml&lt;/script&gt;</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_attrs() {
+        #[component]
+        fn Hypermedia(target: &str) {
+            html! { <div x-target=target></div> }
+        }
+
+        let x = "body";
+        let result = html! { <Hypermedia target=x/> }.to_string();
+
+        assert_eq!(result, r#"<div x-target="body"></div>"#);
+    }
+
+    #[test]
+    fn it_works_with_types_that_impl_display() {
+        #[derive(shtml::Render)]
+        struct Example;
+
+        impl core::fmt::Display for Example {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                f.write_str("example")
+            }
+        }
+
+        let ex = Example {};
+        let result = html! { <div x-example=ex></div> }.to_string();
+
+        assert_eq!(result, r#"<div x-example="example"></div>"#);
+    }
+
+    #[test]
+    fn it_works_with_escaped_components() {
+        #[component]
+        fn Hello(children: Component) {
+            html! { {children} }
+        }
+
+        let x = "<script>alert(\"owned\")</script>";
+        let result = html! {
+            <Hello>
+                <div>{x}</div>
+            </Hello>
+        }
+        .to_string();
+
+        assert_eq!(
+            result,
+            r#"<div>&lt;script&gt;alert(&quot;owned&quot;)&lt;/script&gt;</div>"#
+        );
+    }
+
+    #[test]
+    fn it_works_with_components_with_attrs_and_children() {
+        #[component]
+        fn Heading(class: &str, children: Component) {
+            html! { <h1 class=class>{children}</h1> }
+        }
+
+        let result = html! {
+            <Heading class="text-7xl text-red-500">
+                <p>How now brown cow</p>
+            </Heading>
+        };
+
+        assert_eq!(
+            result.to_string(),
+            r#"<h1 class="text-7xl text-red-500"><p>How now brown cow</p></h1>"#
+        );
+    }
+
+    #[test]
+    fn it_works_with_components_with_children() {
+        #[component]
+        fn Hello(name: &str, children: Component) {
+            html! {
+                {children}
+                <div>{name}</div>
+            }
+        }
+
+        let x = "shtml";
+        let result = html! {
+            <Hello name=x>
+                <span>"mr."</span>
+            </Hello>
+        }
+        .to_string();
+
+        assert_eq!(result, r#"<span>mr.</span><div>shtml</div>"#);
+    }
+
+    #[test]
+    fn it_works_for_tables() {
+        const SIZE: usize = 2;
+        let mut rows = Vec::with_capacity(SIZE);
+        for _ in 0..SIZE {
+            let mut inner = Vec::with_capacity(SIZE);
+            for i in 0..SIZE {
+                inner.push(i);
+            }
+            rows.push(inner);
+        }
+
+        let component = html! {
+            <table>
+                {rows
+                    .iter()
+                    .map(|cols| {
+                        html! {
+                            <tr>
+                                {cols
+                                    .iter()
+                                    .map(|col| html! { <td>{col}</td> })}
+                            </tr>
+                        }
+                    })}
+            </table>
+        };
+
+        assert_eq!(
+            component.to_string(),
+            "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
+        );
+    }
+
+    #[test]
+    fn it_works_for_tables_with_components() {
+        const SIZE: usize = 2;
+        let mut rows = Vec::with_capacity(SIZE);
+        for _ in 0..SIZE {
+            let mut inner = Vec::with_capacity(SIZE);
+            for i in 0..SIZE {
+                inner.push(i);
+            }
+            rows.push(inner);
+        }
+
+        #[component]
+        fn Table(children: Component) {
+            html! { <table>{children}</table> }
+        }
+
+        #[component]
+        fn Row(children: Component) {
+            html! { <tr>{children}</tr> }
+        }
+
+        #[component]
+        fn Col(children: Component) {
+            html! { <td>{children}</td> }
+        }
+
+        let component = html! {
+            <Table>
+                {rows
+                    .iter()
+                    .map(|cols| {
+                        html! {
+                            <Row>
+                                {cols.iter().map(|i| html! { <Col>{i}</Col> })}
+                            </Row>
+                        }
+                    })}
+            </Table>
+        };
+
+        assert_eq!(
+            component.to_string(),
+            "<table><tr><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td></tr></table>"
+        );
+    }
+
+    #[test]
+    fn it_works_with_multiple_children_components() {
+        #[component]
+        fn Html(children: Component) {
+            html! {
+                <!DOCTYPE html>
+                <html lang="en">{children}</html>
+            }
+        }
+
+        #[component]
+        fn Head(children: Component) {
+            html! { <head>{children}</head> }
+        }
+
+        #[component]
+        fn Body(children: Component) {
+            html! { <body>{children}</body> }
+        }
+
+        let component = html! {
+            <Html>
+                <Head>
+                    <meta name="" description=""/>
+                    <title>head</title>
+                </Head>
+                <Body>
+                    <div>shtml</div>
+                </Body>
+            </Html>
+        };
+
+        assert_eq!(component.to_string(), "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"\" description=\"\"/><title>head</title></head><body><div>shtml</div></body></html>");
+    }
+
+    #[test]
+    fn it_works_with_fragments() {
+        #[component]
+        fn HStack(children: Component) {
+            html! { <div class="flex gap-4">{children}</div> }
+        }
+
+        let component = html! {
+            <HStack>
+                <>
+                    <div>1</div>
+                    <div>2</div>
+                    <div>3</div>
+                </>
+            </HStack>
+        };
+
+        assert_eq!(
+            component.to_string(),
+            r#"<div class="flex gap-4"><div>1</div><div>2</div><div>3</div></div>"#
+        );
+    }
+
+    #[test]
+    fn it_works_with_simple_loops() {
+        #[component]
+        fn List(children: Component) {
+            html! { <ul>{children}</ul> }
+        }
+
+        #[component]
+        fn Item(children: Component) {
+            html! { <li>{children}</li> }
+        }
+
+        let items = Vec::from([1, 2, 3]);
+
+        let component = html! { <List>{items.iter().map(|i| html! { <Item>{i}</Item> })}</List> };
+
+        assert_eq!(
+            component.to_string(),
+            r#"<ul><li>1</li><li>2</li><li>3</li></ul>"#
+        );
+    }
+
+    #[test]
+    fn it_works_with_fragments_and_components() {
+        #[component]
+        fn HStack(children: Component) {
+            html! { <div class="flex gap-4">{children}</div> }
+        }
+
+        #[component]
+        fn VStack(children: Component) {
+            html! { <div class="flex flex-col gap-4">{children}</div> }
+        }
+
+        let component = html! {
+            <HStack>
+                <VStack>
+                    <div>1</div>
+                    <div>2</div>
+                </VStack>
+            </HStack>
+        };
+
+        assert_eq!(
+            component.to_string(),
+            r#"<div class="flex gap-4"><div class="flex flex-col gap-4"><div>1</div><div>2</div></div></div>"#
+        );
+    }
+
+    #[test]
+    fn it_works_with_floats() {
+        let x = 3.14;
+        let result = html! { <div>{x}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>3.14</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_special_characters() {
+        let special_characters = "<>&\"'";
+        let result = html! { <div>{special_characters}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>&lt;&gt;&amp;&quot;&#39;</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_strings() {
+        let string = "Hi".to_string();
+        let result = html! { <div>{string}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>Hi</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_string_refs() {
+        let string_ref = &"Hi".to_string();
+        let result = html! { <div>{string_ref}</div> }.to_string();
+
+        assert_eq!(result, r#"<div>Hi</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_spread_attributes() {
+        let attrs = Vec::from([("data-test".to_string(), "test".to_string())]);
+
+        let result = html! { <div {..attrs}>Test</div> }.to_string();
+
+        assert_eq!(result, r#"<div data-test="test">Test</div>"#);
+    }
+
+    #[test]
+    fn it_works_with_out_of_order_attr_components() {
+        #[component]
+        fn OutOfOrderWithLifetimes(c: String, b: u8, a: &str) {
+            html! { <div a=a b=b c=c></div> }
+        }
+
+        let result = html! { <OutOfOrderWithLifetimes b=0 c="c".into() a="a"/> }.to_string();
+
+        assert_eq!(result, r#"<div a="a" b="0" c="c"></div>"#);
+    }
+
+    #[test]
+    fn it_works_with_out_of_order_attr_components_without_refs() {
+        #[component]
+        fn OutOfOrder(b: u8, c: String) {
+            html! { <div c=c b=b></div> }
+        }
+        let result = html! { <OutOfOrder c="c".into() b=0/> }.to_string();
+
+        assert_eq!(result, r#"<div c="c" b="0"></div>"#);
+    }
 
     #[test]
     fn it_works_with_optional_fields() {
@@ -406,7 +406,7 @@ mod tests {
         fn Optional(a: Option<i8>) {
             html! { <div a={a}></div> }
         }
-        let result = html! { <Optional /> }.to_string();
+        let result = html! { <Optional a=None /> }.to_string();
         assert_eq!(result, r#"<div a=""></div>"#);
         let result = html! { <Optional a=Some(0) /> }.to_string();
         assert_eq!(result, r#"<div a="0"></div>"#)
