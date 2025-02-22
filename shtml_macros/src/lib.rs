@@ -99,8 +99,8 @@ fn render(output: &mut Output, node: &Node) {
                     },
                     None => todo!(),
                 },
-                rstml::node::NodeName::Punctuated(_) => todo!(),
-                rstml::node::NodeName::Block(_) => todo!(),
+                rstml::node::NodeName::Punctuated(_) => None,
+                rstml::node::NodeName::Block(_) => None,
             };
             match component_name {
                 Some(fn_name) => {
