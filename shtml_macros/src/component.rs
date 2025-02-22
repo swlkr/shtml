@@ -51,7 +51,7 @@ pub fn component_macro(item_fn: ItemFn) -> Result<TokenStream2> {
 
                     (
                         Some(lifetime.clone()),
-                        quote! { #pat: #and_token #lifetime #mutability #elem },
+                        quote! { pub #pat: #and_token #lifetime #mutability #elem },
                     )
                 }
                 _ => unimplemented!(),
