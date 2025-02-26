@@ -5,7 +5,7 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use rstml::{self, node::Node, Parser, ParserConfig};
 use std::{collections::HashSet, fmt::Debug};
-use syn::{parse_macro_input, DeriveInput, Ident, ItemFn, LitStr, Result};
+use syn::{parse_macro_input, Data, DeriveInput, Ident, ItemFn, LitStr, Result};
 
 #[proc_macro_derive(Render)]
 pub fn derive_render(s: TokenStream) -> TokenStream {
@@ -19,12 +19,35 @@ pub fn derive_render(s: TokenStream) -> TokenStream {
 fn derive_render_macro(input: DeriveInput) -> Result<TokenStream2> {
     let ident = input.ident;
     let generics = input.generics;
-    Ok(quote! {
-      impl #generics shtml::Render for #ident #generics {
-        fn render_to_string(&self, buffer: &mut String) {
-            buffer.push_str(&self.to_string());
+    let tokens = match &input.data {
+        Data::Enum(data) => {
+            let variants = data.variants.iter().map(|v| {
+                let variant_name = &v.ident;
+                quote! {
+                    Self::#variant_name => write!(f, stringify!(#variant_name)),
+                }
+            });
+
+            quote! {
+                impl std::fmt::Display for #ident {
+                    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        match self {
+                            #(#variants)*
+                        }
+                    }
+                }
+            }
         }
-      }
+        _ => quote! {},
+    };
+
+    Ok(quote! {
+        #tokens
+        impl #generics shtml::Render for #ident #generics {
+            fn render_to_string(&self, buffer: &mut String) {
+                buffer.push_str(&self.to_string());
+            }
+        }
     })
 }
 
