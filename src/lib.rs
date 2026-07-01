@@ -837,13 +837,34 @@ pub fn escape<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
 }
 
 /// An attribute macro that transforms a component function into a struct, allowing
-/// attributes to be passed in any order.
+/// attributes to be passed in any order and optional props to be skipped.
 ///
 /// Without `#[component]`, attributes must be passed in the same order as the function
-/// parameters. With `#[component]`, the macro generates a struct with named fields,
-/// so attributes can be specified in any order.
+/// parameters. With `#[component]`, the macro generates a builder, so attributes can be
+/// specified in any order.
 ///
 /// Requires the `chaos` feature flag.
+///
+/// # Optional props
+///
+/// A parameter of type `Option<T>` is an *optional prop*: it may be omitted at the call
+/// site (defaulting to `None`), or supplied as `Some(value)`.
+///
+/// ```ignore
+/// use shtml::{html, component, Component, Render};
+///
+/// #[component]
+/// fn Badge(text: String, count: Option<u8>) -> Component {
+///     match count {
+///         Some(c) => html! { <span>{text}{c}</span> },
+///         None => html! { <span>{text}</span> },
+///     }
+/// }
+///
+/// // Both are valid:
+/// let with = html! { <Badge text="hi".into() count=Some(5)/> }.to_string();
+/// let without = html! { <Badge text="hi".into()/> }.to_string();
+/// ```
 ///
 /// # Example
 ///
@@ -888,5 +909,51 @@ mod tests {
         let result = html! { <Chaos c="c".into() b=0/> }.to_string();
 
         assert_eq!(result, r#"<div c="c" b="0"></div>"#);
+    }
+
+    #[component]
+    fn Badge(text: String, count: Option<u8>) -> Component {
+        match count {
+            Some(c) => html! { <span>{text}{c}</span> },
+            None => html! { <span>{text}</span> },
+        }
+    }
+
+    #[test]
+    fn it_works_with_optional_prop_present() {
+        let result = html! { <Badge text="hi".into() count=Some(5)/> }.to_string();
+        assert_eq!(result, r#"<span>hi5</span>"#);
+    }
+
+    #[test]
+    fn it_works_with_optional_prop_absent() {
+        let result = html! { <Badge text="hi".into()/> }.to_string();
+        assert_eq!(result, r#"<span>hi</span>"#);
+    }
+
+    #[test]
+    fn it_works_with_optional_prop_and_other_order() {
+        let result = html! { <Badge count=Some(7) text="yo".into()/> }.to_string();
+        assert_eq!(result, r#"<span>yo7</span>"#);
+    }
+
+    #[test]
+    fn it_works_with_optional_prop_and_children() {
+        #[component]
+        fn Card(title: Option<String>, elements: Elements) -> Component {
+            match title {
+                Some(t) => html! { <div class="card"><h2>{t}</h2>{elements}</div> },
+                None => html! { <div class="card">{elements}</div> },
+            }
+        }
+
+        let with_title = html! { <Card title=Some("Info".into())><p>body</p></Card> }.to_string();
+        assert_eq!(
+            with_title,
+            r#"<div class="card"><h2>Info</h2><p>body</p></div>"#
+        );
+
+        let without_title = html! { <Card><p>body</p></Card> }.to_string();
+        assert_eq!(without_title, r#"<div class="card"><p>body</p></div>"#);
     }
 }

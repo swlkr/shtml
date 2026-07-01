@@ -127,7 +127,12 @@ fn render(output: &mut Output, node: &Node) -> Result<()> {
                                             if let syn::Stmt::Expr(syn::Expr::Range(expr_range), _) = stmt {
                                                 if let Some(box_expr) = &expr_range.end {
                                                     let tokens = (*box_expr.clone()).to_token_stream();
-                                                    return Some(quote! { #tokens });
+                                                    // Spread attributes are only meaningful for
+                                                    // positional (non-chaos) component calls.
+                                                    #[cfg(not(feature = "chaos"))]
+                                                    { return Some(quote! { #tokens }); }
+                                                    #[cfg(feature = "chaos")]
+                                                    { let _ = tokens; return None; }
                                                 }
                                             }
                                         }
@@ -137,12 +142,10 @@ fn render(output: &mut Output, node: &Node) -> Result<()> {
                                 }
                             }
                             rstml::node::NodeAttribute::Attribute(attr) => {
-                                #[cfg(feature = "chaos")]
-                                let key = &attr.key;
                                 let value = attr.value();
 
                                 #[cfg(feature = "chaos")]
-                                { Some(quote! { #key: #value }) }
+                                { let key = &attr.key; Some(quote! { .#key(#value) }) }
 
                                 #[cfg(not(feature = "chaos"))]
                                 { Some(quote! { #value }) }
@@ -169,13 +172,20 @@ fn render(output: &mut Output, node: &Node) -> Result<()> {
                                 }
                             };
 
+                            // In chaos mode children are passed via the conventional
+                            // `elements` setter; otherwise they are the trailing
+                            // positional argument.
+                            #[cfg(feature = "chaos")]
+                            inputs.push(quote! { .elements(#inner_tokens) });
+
+                            #[cfg(not(feature = "chaos"))]
                             inputs.push(inner_tokens);
                         }
                         _ => {}
                     }
 
                     #[cfg(feature = "chaos")]
-                    let tokens = quote! { #fn_name { #(#inputs,)* } };
+                    let tokens = quote! { #fn_name::builder() #(#inputs)* .build() };
 
                     #[cfg(not(feature = "chaos"))]
                     let tokens = quote! { #fn_name(#(#inputs,)*) };
