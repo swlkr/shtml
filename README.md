@@ -276,6 +276,54 @@ Without `chaos`, attributes must match the function parameter order:
 let result = html! { <Chaos a="a" b=0 c="c".into()/> }.to_string();
 ```
 
+#### Optional props
+
+With `#[component]`, a parameter of type `Option<T>` becomes an *optional prop*. It can
+be omitted at the call site (defaulting to `None`) or supplied as `Some(value)`:
+
+```rust,ignore
+use shtml::{html, component, Component, Render};
+
+#[component]
+fn Badge(text: String, count: Option<u8>) -> Component {
+    match count {
+        Some(c) => html! { <span>{text}{c}</span> },
+        None => html! { <span>{text}</span> },
+    }
+}
+
+// Provided:
+let result = html! { <Badge text="hi".into() count=Some(5)/> }.to_string();
+assert_eq!(result, r#"<span>hi5</span>"#);
+
+// Skipped (defaults to None):
+let result = html! { <Badge text="hi".into()/> }.to_string();
+assert_eq!(result, r#"<span>hi</span>"#);
+```
+
+Optional props also work alongside children. In `chaos` mode the children parameter must
+be named `elements`:
+
+```rust,ignore
+use shtml::{html, component, Component, Elements, Render};
+
+#[component]
+fn Card(title: Option<String>, elements: Elements) -> Component {
+    match title {
+        Some(t) => html! { <div class="card"><h2>{t}</h2>{elements}</div> },
+        None => html! { <div class="card">{elements}</div> },
+    }
+}
+
+let result = html! { <Card><p>body</p></Card> }.to_string();
+assert_eq!(result, r#"<div class="card"><p>body</p></div>"#);
+```
+
+Non-`Option` parameters remain required; omitting one panics at build time with
+`missing required prop \`name\``. Note that `Option<&str>` is not supported as a prop
+type — use `Option<String>` (a by-value `Option` holding a borrow would need a named
+lifetime the macro does not infer).
+
 ## Tips and tricks
 
 - [leptosfmt](https://github.com/bram209/leptosfmt) with this override `rustfmt = { overrideCommand = ["leptosfmt", "--stdin", "--rustfmt", "--override-macro-names", "html"] }`
